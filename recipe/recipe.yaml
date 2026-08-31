@@ -12,6 +12,7 @@ source:
 
 build:
   script:
+    - export CPATH="$PREFIX/include:$CPATH"
     - cmake -S . -B build -G Ninja -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DBUILD_TESTS=ON ${CMAKE_ARGS}
     - cmake -LH build
     - cmake --build build --parallel ${CPU_COUNT}
