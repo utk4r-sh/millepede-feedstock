@@ -1,5 +1,5 @@
 context:
-  version: "04.16.03"
+  version: "05.01.05"
   tag: ${{ version | replace(".", "-") }}
 
 package:
@@ -8,12 +8,16 @@ package:
 
 source:
   url: https://gitlab.desy.de/millepede/millepede-ii/-/archive/V${{ tag }}/millepede-ii-V${{ tag }}.tar.gz
-  sha256: ede22293d731526749aa964559e62745a33e269ca913b0707ac9952769f6bddb
+  sha256: c567c8f486194c1edf9e04c53c15f22635120be13e1de19c428f2eb088ae3222
 
 build:
   script:
-    - make pede CCOMP=$CC FCOMP=$FC LOADER=$FC ZLIB_INCLUDES_DIR="${PREFIX}/include" ZLIB_LIBS_DIR="${PREFIX}/lib" PREFIX="${PREFIX}" install
-  number: 1
+    - cmake -S . -B build -G Ninja -DCMAKE_C_COMPILER=$CC -DBUILD_TESTS=ON ${CMAKE_ARGS}
+    - cmake -LH build
+    - cmake --build build --parallel ${CPU_COUNT}
+    - cmake --install build
+    - ctest --test-dir build -V
+  number: 0
   skip:
     - win
 
@@ -22,19 +26,43 @@ requirements:
     - ${{ compiler("c") }}
     - ${{ compiler("fortran") }}
     - ${{ stdlib("c") }}
-    - make
+    - ninja
   host:
     - zlib
+    - numpy
 
 tests:
   - package_contents:
       bin:
         - pede
-        - readMilleBinary
+        - convertMilleFormats
+        - inspectMilleBinary
+        - testMilleC
+      lib:
+        - Mille2
+        - MilleC
+      include:
+        - Mille/IMilleReader.h
+        - Mille/MilleDataStructures.h
+        - Mille/MilleDecoder.h
+        - Mille/MilleFactory.h
+        - Mille/MilleReaderC.h
+        - Mille/MilleReaderCSV.h
+        - Mille/MilleReaderCcompressed.h
+        - Mille/MilleRecord.h
+        - Mille/MilleRecord.ixx
+        - Mille/MilleRecordC.h
+        - Mille/MilleRecordCSV.h
+        - Mille/readMilleC.h
+        - Mille/writeMilleC.h
+      files:
+        - cmake/*
+        - modules/millef.mod
+        - mp2setup.sh
+        - python/*
       strict: true
   - script:
-      - pede -t1
-      - readMilleBinary ./mp2tst.bin
+      - testMilleC
 
 about:
   homepage: https://millepede.pages.desy.de/millepede-ii/index.html
